@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { getPool } from "@/lib/db"
+import { getPool } from "../../../lib/db"
 import { v4 as uuidv4 } from "uuid"
 import dayjs from "dayjs"
 
@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
     }
   } catch (error) {
     console.error("Error en la ruta API:", error)
-    return NextResponse.json({ error: "Error interno del servidor", details: error.message }, { status: 500 })
+    return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 })
   }
 }
 

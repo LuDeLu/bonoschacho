@@ -1,7 +1,5 @@
 "use server"
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"
-
 export interface Servicio {
   id: string
   nombre: string
@@ -24,7 +22,7 @@ export interface Contacto {
 }
 
 export async function crearBono(nombre: string, telefono: string, fechaCreacion?: string): Promise<Bono> {
-  const response = await fetch(`${API_URL}/api/bonos`, {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/bonos`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -33,20 +31,16 @@ export async function crearBono(nombre: string, telefono: string, fechaCreacion?
   })
 
   if (!response.ok) {
-    const errorData = await response.json()
-    console.error("Error al crear el bono:", errorData)
-    throw new Error(errorData.error || "Error al crear el bono")
+    throw new Error("Error al crear el bono")
   }
 
   return response.json()
 }
 
 export async function getBonos(): Promise<Bono[]> {
-  const response = await fetch(`${API_URL}/api/bonos`)
+  const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/bonos`)
   if (!response.ok) {
-    const errorData = await response.json()
-    console.error("Error al obtener los bonos:", errorData)
-    throw new Error(errorData.error || "Error al obtener los bonos")
+    throw new Error("Error al obtener los bonos")
   }
   return response.json()
 }
@@ -57,7 +51,7 @@ export async function getBonoById(id: string): Promise<Bono | undefined> {
 }
 
 export async function actualizarBono(bonoActualizado: Bono) {
-  const response = await fetch(`${API_URL}/api/bonos`, {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/bonos`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -66,28 +60,22 @@ export async function actualizarBono(bonoActualizado: Bono) {
   })
 
   if (!response.ok) {
-    const errorData = await response.json()
-    console.error("Error al actualizar el bono:", errorData)
-    throw new Error(errorData.error || "Error al actualizar el bono")
+    throw new Error("Error al actualizar el bono")
   }
 }
 
 export async function getBonosActivos(): Promise<Bono[]> {
-  const response = await fetch(`${API_URL}/api/bonos/activos`)
+  const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/bonos?type=activos`)
   if (!response.ok) {
-    const errorData = await response.json()
-    console.error("Error al obtener los bonos activos:", errorData)
-    throw new Error(errorData.error || "Error al obtener los bonos activos")
+    throw new Error("Error al obtener los bonos activos")
   }
   return response.json()
 }
 
 export async function getBonosExpirados(): Promise<Bono[]> {
-  const response = await fetch(`${API_URL}/api/bonos/expirados`)
+  const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/bonos?type=expirados`)
   if (!response.ok) {
-    const errorData = await response.json()
-    console.error("Error al obtener los bonos expirados:", errorData)
-    throw new Error(errorData.error || "Error al obtener los bonos expirados")
+    throw new Error("Error al obtener los bonos expirados")
   }
   return response.json()
 }
