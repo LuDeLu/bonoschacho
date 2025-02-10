@@ -14,10 +14,11 @@ export default function BonoPage() {
 
   useEffect(() => {
     if (typeof id === "string") {
-      const bonoEncontrado = getBonoById(id)
-      if (bonoEncontrado) {
-        setBono(bonoEncontrado)
-      }
+      getBonoById(id).then((bonoEncontrado) => {
+        if (bonoEncontrado) {
+          setBono(bonoEncontrado)
+        }
+      })
     }
   }, [id])
 

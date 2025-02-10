@@ -15,14 +15,29 @@ export default function Home() {
   const [bonosExpirados, setBonosExpirados] = useState([])
 
   useEffect(() => {
-    setBonosActivos(getBonosActivos())
-    setBonosExpirados(getBonosExpirados())
+    async function fetchBonos() {
+      try {
+        const activos = await getBonosActivos()
+        const expirados = await getBonosExpirados()
+        setBonosActivos(activos)
+        setBonosExpirados(expirados)
+      } catch (error) {
+        console.error("Error fetching bonos:", error)
+      }
+    }
+    fetchBonos()
   }, [])
 
-  const handleGenerateSampleData = () => {
-    generarBonosDeMuestra()
-    setBonosActivos(getBonosActivos())
-    setBonosExpirados(getBonosExpirados())
+  const handleGenerateSampleData = async () => {
+    try {
+      await generarBonosDeMuestra()
+      const activos = await getBonosActivos()
+      const expirados = await getBonosExpirados()
+      setBonosActivos(activos)
+      setBonosExpirados(expirados)
+    } catch (error) {
+      console.error("Error generating sample data:", error)
+    }
   }
 
   return (

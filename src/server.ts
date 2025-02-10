@@ -52,7 +52,7 @@ app.post("/api/bonos", async (req, res) => {
       "INSERT INTO bonos (nombre, telefono, fechaCreacion, fechaExpiracion) VALUES (?, ?, ?, DATE_ADD(?, INTERVAL 1 MONTH))",
       [nombre, telefono, fechaCreacion, fechaCreacion],
     )
-    res.status(201).json({ id: result.insertId, nombre, telefono, fechaCreacion })
+    res.status(201).json({ id: result, nombre, telefono, fechaCreacion })
   } catch (error) {
     console.error("Error creating bono:", error)
     res.status(500).json({ error: "Internal Server Error" })
