@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
     }
   } catch (error) {
     console.error("Error en la ruta API:", error)
-    return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 })
+    return NextResponse.json({ error: "Error interno del servidor", details: error.message }, { status: 500 })
   }
 }
 

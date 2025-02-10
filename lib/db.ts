@@ -10,6 +10,7 @@ export async function getPool(): Promise<Pool> {
         user: process.env.DB_USER,
         password: process.env.DB_PASSWORD,
         database: process.env.DB_NAME,
+        ssl: process.env.VERCEL_ENV === "production" ? { rejectUnauthorized: true } : undefined,
         waitForConnections: true,
         connectionLimit: 10,
         queueLimit: 0,

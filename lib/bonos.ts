@@ -31,8 +31,9 @@ export async function crearBono(nombre: string, telefono: string, fechaCreacion?
   })
 
   if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.error || "Error al crear el bono")
+    const errorData = await response.json()
+    console.error("Error al crear el bono:", errorData)
+    throw new Error(errorData.error || "Error al crear el bono")
   }
 
   return response.json()
@@ -41,8 +42,9 @@ export async function crearBono(nombre: string, telefono: string, fechaCreacion?
 export async function getBonos(): Promise<Bono[]> {
   const response = await fetch("/api/bonos")
   if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.error || "Error al obtener los bonos")
+    const errorData = await response.json()
+    console.error("Error al obtener los bonos:", errorData)
+    throw new Error(errorData.error || "Error al obtener los bonos")
   }
   return response.json()
 }
@@ -62,16 +64,18 @@ export async function actualizarBono(bonoActualizado: Bono) {
   })
 
   if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.error || "Error al actualizar el bono")
+    const errorData = await response.json()
+    console.error("Error al actualizar el bono:", errorData)
+    throw new Error(errorData.error || "Error al actualizar el bono")
   }
 }
 
 export async function getBonosActivos(): Promise<Bono[]> {
   const response = await fetch("/api/bonos?type=activos")
   if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.error || "Error al obtener los bonos activos")
+    const errorData = await response.json()
+    console.error("Error al obtener los bonos activos:", errorData)
+    throw new Error(errorData.error || "Error al obtener los bonos activos")
   }
   return response.json()
 }
@@ -79,8 +83,9 @@ export async function getBonosActivos(): Promise<Bono[]> {
 export async function getBonosExpirados(): Promise<Bono[]> {
   const response = await fetch("/api/bonos?type=expirados")
   if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.error || "Error al obtener los bonos expirados")
+    const errorData = await response.json()
+    console.error("Error al obtener los bonos expirados:", errorData)
+    throw new Error(errorData.error || "Error al obtener los bonos expirados")
   }
   return response.json()
 }
