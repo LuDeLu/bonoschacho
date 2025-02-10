@@ -31,7 +31,8 @@ export async function crearBono(nombre: string, telefono: string, fechaCreacion?
   })
 
   if (!response.ok) {
-    throw new Error("Error al crear el bono")
+    const error = await response.json()
+    throw new Error(error.error || "Error al crear el bono")
   }
 
   return response.json()
@@ -40,7 +41,8 @@ export async function crearBono(nombre: string, telefono: string, fechaCreacion?
 export async function getBonos(): Promise<Bono[]> {
   const response = await fetch("/api/bonos")
   if (!response.ok) {
-    throw new Error("Error al obtener los bonos")
+    const error = await response.json()
+    throw new Error(error.error || "Error al obtener los bonos")
   }
   return response.json()
 }
@@ -60,14 +62,16 @@ export async function actualizarBono(bonoActualizado: Bono) {
   })
 
   if (!response.ok) {
-    throw new Error("Error al actualizar el bono")
+    const error = await response.json()
+    throw new Error(error.error || "Error al actualizar el bono")
   }
 }
 
 export async function getBonosActivos(): Promise<Bono[]> {
   const response = await fetch("/api/bonos?type=activos")
   if (!response.ok) {
-    throw new Error("Error al obtener los bonos activos")
+    const error = await response.json()
+    throw new Error(error.error || "Error al obtener los bonos activos")
   }
   return response.json()
 }
@@ -75,7 +79,8 @@ export async function getBonosActivos(): Promise<Bono[]> {
 export async function getBonosExpirados(): Promise<Bono[]> {
   const response = await fetch("/api/bonos?type=expirados")
   if (!response.ok) {
-    throw new Error("Error al obtener los bonos expirados")
+    const error = await response.json()
+    throw new Error(error.error || "Error al obtener los bonos expirados")
   }
   return response.json()
 }
