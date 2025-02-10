@@ -1,4 +1,6 @@
-"use server"
+import { getPool } from "./db"
+import { v4 as uuidv4 } from "uuid"
+import dayjs from "dayjs"
 
 export interface Servicio {
   id: string
@@ -22,89 +24,190 @@ export interface Contacto {
 }
 
 export async function crearBono(nombre: string, telefono: string, fechaCreacion?: string): Promise<Bono> {
-  const response = await fetch("/api/bonos", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ nombre, telefono, fechaCreacion }),
-  })
+  const pool = await getPool()
+  const _fechaCreacion = fechaCreacion || dayjs().format("YYYY-MM-DD")
+  const fechaExpiracion = dayjs(_fechaCreacion).add(1, "month").format("YYYY-MM-DD")
+  const id = uuidv4()
 
-  if (!response.ok) {
-    const errorData = await response.json()
-    console.error("Error al crear el bono:", errorData)
-    throw new Error(errorData.error || "Error al crear el bono")
+  try {
+    await pool.query(
+      "INSERT INTO bonos (id, nombre, telefono, fechaCreacion, fechaExpiracion) VALUES (?, ?, ?, ?, ?)",
+      [id, nombre, telefono, _fechaCreacion, fechaExpiracion],
+    )
+
+    const servicios = [
+      { id: uuidv4(), nombre: "Servicio 1", consumido: false },
+      { id: uuidv4(), nombre: "Servicio 2", consumido: false },
+      { id: uuidv4(), nombre: "Servicio 3", consumido: false },
+      { id: uuidv4(), nombre: "Servicio 4", consumido: false },
+    ]
+
+    for (const servicio of servicios) {
+      await pool.query("INSERT INTO servicios (id, bonoId, nombre, consumido) VALUES (?, ?, ?, ?)", [
+        servicio.id,
+        id,
+        servicio.nombre,
+        servicio.consumido,
+      ])
+    }
+
+    return { id, nombre, telefono, servicios, fechaCreacion: _fechaCreacion, fechaExpiracion }
+  } catch (error) {
+    console.error("Error al crear bono:", error)
+    throw new Error("Error al crear el bono")
   }
-
-  return response.json()
 }
 
 export async function getBonos(): Promise<Bono[]> {
-  const response = await fetch("/api/bonos")
-  if (!response.ok) {
-    const errorData = await response.json()
-    console.error("Error al obtener los bonos:", errorData)
-    throw new Error(errorData.error || "Error al obtener los bonos")
+  const pool = await getPool()
+  try {
+    const [bonosRows] = await pool.query("SELECT * FROM bonos")
+    const bonos = await Promise.all(
+      (bonosRows as any[]).map(async (bonoRow) => {
+        const [serviciosRows] = await pool.query("SELECT * FROM servicios WHERE bonoId = ?", [bonoRow.id])
+        return {
+          ...bonoRow,
+          servicios: serviciosRows,
+        }
+      }),
+    )
+    return bonos
+  } catch (error) {
+    console.error("Error al obtener bonos:", error)
+    throw new Error("Error al obtener los bonos")
   }
-  return response.json()
 }
 
 export async function getBonoById(id: string): Promise<Bono | undefined> {
-  const bonos = await getBonos()
-  return bonos.find((bono) => bono.id === id)
+  const pool = await getPool()
+  try {
+    const [bonoRows] = await pool.query("SELECT * FROM bonos WHERE id = ?", [id])
+    if (bonoRows.length === 0) {
+      return undefined
+    }
+    const bonoRow = bonoRows[0]
+    const [serviciosRows] = await pool.query("SELECT * FROM servicios WHERE bonoId = ?", [id])
+    return {
+      ...bonoRow,
+      servicios: serviciosRows,
+    }
+  } catch (error) {
+    console.error("Error al obtener bono por ID:", error)
+    throw new Error("Error al obtener el bono")
+  }
 }
 
 export async function actualizarBono(bonoActualizado: Bono) {
-  const response = await fetch("/api/bonos", {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(bonoActualizado),
-  })
+  const pool = await getPool()
+  try {
+    await pool.query("UPDATE bonos SET nombre = ?, telefono = ?, fechaCreacion = ?, fechaExpiracion = ? WHERE id = ?", [
+      bonoActualizado.nombre,
+      bonoActualizado.telefono,
+      bonoActualizado.fechaCreacion,
+      bonoActualizado.fechaExpiracion,
+      bonoActualizado.id,
+    ])
 
-  if (!response.ok) {
-    const errorData = await response.json()
-    console.error("Error al actualizar el bono:", errorData)
-    throw new Error(errorData.error || "Error al actualizar el bono")
+    for (const servicio of bonoActualizado.servicios) {
+      await pool.query("UPDATE servicios SET nombre = ?, consumido = ? WHERE id = ? AND bonoId = ?", [
+        servicio.nombre,
+        servicio.consumido,
+        servicio.id,
+        bonoActualizado.id,
+      ])
+    }
+  } catch (error) {
+    console.error("Error al actualizar bono:", error)
+    throw new Error("Error al actualizar el bono")
   }
 }
 
 export async function getBonosActivos(): Promise<Bono[]> {
-  const response = await fetch("/api/bonos?type=activos")
-  if (!response.ok) {
-    const errorData = await response.json()
-    console.error("Error al obtener los bonos activos:", errorData)
-    throw new Error(errorData.error || "Error al obtener los bonos activos")
+  const pool = await getPool()
+  try {
+    const today = dayjs().format("YYYY-MM-DD")
+    const [bonosRows] = await pool.query("SELECT * FROM bonos WHERE fechaExpiracion >= ?", [today])
+    const bonos = await Promise.all(
+      (bonosRows as any[]).map(async (bonoRow) => {
+        const [serviciosRows] = await pool.query("SELECT * FROM servicios WHERE bonoId = ?", [bonoRow.id])
+        return {
+          ...bonoRow,
+          servicios: serviciosRows,
+        }
+      }),
+    )
+    return bonos
+  } catch (error) {
+    console.error("Error al obtener bonos activos:", error)
+    throw new Error("Error al obtener los bonos activos")
   }
-  return response.json()
 }
 
 export async function getBonosExpirados(): Promise<Bono[]> {
-  const response = await fetch("/api/bonos?type=expirados")
-  if (!response.ok) {
-    const errorData = await response.json()
-    console.error("Error al obtener los bonos expirados:", errorData)
-    throw new Error(errorData.error || "Error al obtener los bonos expirados")
+  const pool = await getPool()
+  try {
+    const today = dayjs().format("YYYY-MM-DD")
+    const [bonosRows] = await pool.query("SELECT * FROM bonos WHERE fechaExpiracion < ?", [today])
+    const bonos = await Promise.all(
+      (bonosRows as any[]).map(async (bonoRow) => {
+        const [serviciosRows] = await pool.query("SELECT * FROM servicios WHERE bonoId = ?", [bonoRow.id])
+        return {
+          ...bonoRow,
+          servicios: serviciosRows,
+        }
+      }),
+    )
+    return bonos
+  } catch (error) {
+    console.error("Error al obtener bonos expirados:", error)
+    throw new Error("Error al obtener los bonos expirados")
   }
-  return response.json()
 }
 
-// Nota: Las funciones relacionadas con contactos deberían moverse a un archivo separado
-// y tener su propia API route. Por ahora, las dejaremos aquí como ejemplo.
+// Nota: Las funciones relacionadas con contactos deberían implementarse de manera similar,
+// utilizando el pool de conexiones y manejando los errores adecuadamente.
 
 export async function agregarContacto(nombre: string, telefono: string): Promise<Contacto> {
-  // Implementar lógica para agregar contacto a través de una API route
-  throw new Error("No implementado")
+  const pool = await getPool()
+  try {
+    const id = uuidv4()
+    await pool.query("INSERT INTO contactos (id, nombre, telefono) VALUES (?, ?, ?)", [id, nombre, telefono])
+    return { id, nombre, telefono }
+  } catch (error) {
+    console.error("Error al agregar contacto:", error)
+    throw new Error("Error al agregar el contacto")
+  }
 }
 
 export async function getContactos(): Promise<Contacto[]> {
-  // Implementar lógica para obtener contactos a través de una API route
-  throw new Error("No implementado")
+  const pool = await getPool()
+  try {
+    const [rows] = await pool.query("SELECT * FROM contactos")
+    return rows as Contacto[]
+  } catch (error) {
+    console.error("Error al obtener contactos:", error)
+    throw new Error("Error al obtener los contactos")
+  }
 }
 
 export async function generarBonosDeMuestra() {
-  // Implementar lógica para generar bonos de muestra a través de una API route
-  throw new Error("No implementado")
+  const pool = await getPool()
+  try {
+    // Generar algunos bonos de muestra
+    const bonosMuestra = [
+      { nombre: "Juan Pérez", telefono: "1234567890" },
+      { nombre: "María García", telefono: "0987654321" },
+      { nombre: "Carlos Rodríguez", telefono: "1122334455" },
+    ]
+
+    for (const bono of bonosMuestra) {
+      await crearBono(bono.nombre, bono.telefono)
+    }
+
+    console.log("Bonos de muestra generados con éxito")
+  } catch (error) {
+    console.error("Error al generar bonos de muestra:", error)
+    throw new Error("Error al generar bonos de muestra")
+  }
 }
 
